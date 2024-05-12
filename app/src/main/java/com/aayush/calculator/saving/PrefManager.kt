@@ -20,10 +20,10 @@ object PrefManager {
         if (generalPreferences != null) return
         generalPreferences =
             context.getSharedPreferences(Location.General.location, Context.MODE_PRIVATE)
-        protectedPreferences =
-            context.getSharedPreferences(Location.Protected.location, Context.MODE_PRIVATE)
         irrelevantPreferences =
             context.getSharedPreferences(Location.Irrelevant.location, Context.MODE_PRIVATE)
+        protectedPreferences =
+            context.getSharedPreferences(Location.Protected.location, Context.MODE_PRIVATE)
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -178,7 +178,7 @@ object PrefManager {
                     default as? Set<String> ?: setOf()
                 ) as T?
 
-                else -> throw IllegalArgumentException("Type not supported")
+                else -> deserializeClass(key, default, Location.Irrelevant)
             }
         } catch (e: Exception) {
             default
@@ -206,6 +206,7 @@ object PrefManager {
                 is String -> putString(key, value as String)
                 is Set<*> -> putStringSet(key, value as Set<String>)
                 null -> remove(key)
+                else -> serializeClass(key, value, Location.Irrelevant)
             }
             apply()
         }
@@ -286,6 +287,11 @@ object PrefManager {
     fun SharedPreferenceLiveData<*>.asLiveStringSet(): SharedPreferenceStringSetLiveData =
         this as? SharedPreferenceStringSetLiveData
             ?: throw ClassCastException("Cannot cast to SharedPreferenceLiveData<Set<String>>")
+    fun exportAllPrefs(prefLocation: List<Location>): String {
+        return PreferencePackager.pack(
+            prefLocation.associateWith { getPrefLocation(it) }
+        )
+    }
 
 
     /**
@@ -331,8 +337,8 @@ object PrefManager {
     private fun getPrefLocation(prefLoc: Location): SharedPreferences {
         return when (prefLoc) {
             Location.General -> generalPreferences
-            Location.Protected -> protectedPreferences
             Location.Irrelevant -> irrelevantPreferences
+            Location.Protected -> protectedPreferences
         }!!
     }
 
@@ -348,6 +354,7 @@ object PrefManager {
             pref.edit().putString(key, serialized).apply()
         } catch (e: Exception) {
             println("Error serializing preference: ${e.message}")
+
         }
     }
 
@@ -363,6 +370,13 @@ object PrefManager {
                 val obj = ois.readObject() as T?
                 obj
             } else {
+                default
+            }
+        } catch (e: java.io.InvalidClassException) {
+            try {
+                getPrefLocation(location).edit().remove(key).apply()
+                default
+            } catch (e: Exception) {
                 default
             }
         } catch (e: Exception) {
