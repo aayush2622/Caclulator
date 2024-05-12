@@ -7,5 +7,5 @@ import com.aayush.calculator.saving.internal.Pref
 enum class PrefName(val data: Pref) {
     //General
     Amoled(Pref(Location.General, Boolean::class, false)),
-    HistoryList(Pref(Location.General, List::class, listOf<History>(History("1+1", "2")))),
+    DarkMode(Pref(Location.General, Int::class, 0)),
 }

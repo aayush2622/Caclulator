@@ -1,10 +1,13 @@
 package com.aayush.calculator
 
+import android.content.Intent
 import android.os.Bundle
+import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.updateLayoutParams
 import com.aayush.calculator.databinding.ActivityMainBinding
 import com.aayush.calculator.saving.PrefManager
-import com.aayush.calculator.saving.PrefName
+import com.aayush.calculator.settings.SettingsActivity
 import org.mariuszgromada.math.mxparser.Expression
 
 class MainActivity : AppCompatActivity() {
@@ -15,9 +18,15 @@ class MainActivity : AppCompatActivity() {
         ThemeManager.apply(this)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
+        val context = this
         binding.apply{
-
+            root.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                topMargin = statusBarHeight
+                bottomMargin = navBarHeight
+            }
+            menuButton.setOnClickListener {
+                startActivity(Intent(context, SettingsActivity::class.java))
+            }
             clearButton.setOnClickListener {
                 input.text = ""
                 output.text = ""
